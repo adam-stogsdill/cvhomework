@@ -17,11 +17,12 @@ def fuse_color_images(A, B):
     C[A_only] = A[A_only]
     C[B_only] = B[B_only]
     C[A_and_B] = 0.5 * A[A_and_B] + 0.5 * B[A_and_B]
-    return 
+    return C
 
 
 # Get first image
 icurrent = cv2.imread("mural01.jpg")
+icurrent_file = "mural01.jpg"
 
 prev_image_height = icurrent.shape[0]
 prev_image_width = icurrent.shape[1]
@@ -40,12 +41,13 @@ desired_corners[:,1] += 100      # Add y offset
 
 H_current_mosaic, _ = cv2.findHomography(image_corners, desired_corners)
 
-output_width = int(desired_width * 5)
+output_width = int(desired_width * 12)
 output_height = int(desired_height * 2)
 
-first_mural_warped = cv2.warpPerspective(icurrent, H_current_mosaic, (output_width, output_height))
+prev_mural_warped = cv2.warpPerspective(icurrent, H_current_mosaic, (output_width, output_height))
 
 iprev = icurrent
+iprev_file = icurrent_file
 H_prev_mosaic = H_current_mosaic
 
 mural_0_1_points = np.asarray([[521, 182, 1], [716, 184, 1], [705, 400, 1], [477, 375, 1]])
@@ -55,15 +57,26 @@ mural_0_1_points = np.asarray([[521, 182, 1], [716, 184, 1], [705, 400, 1], [477
 for i in range(2, 13):
     if i < 10:
         icurrent = cv2.imread("mural0"+str(i)+".jpg")
+        icurrent_file = "mural0"+str(i)+".jpg"
     else:
         icurrent = cv2.imread("mural"+str(i)+".jpg")
+        icurrent_file = "mural"+str(i)+".jpg"
 
-    H_current_mosaic = H_prev_mosaic @ perform("mural01.jpg", "mural0"+str(i)+".jpg", points=mural_0_1_points, prev_image_width / 2)
+    H_current_mosaic = H_prev_mosaic @ perform(iprev_file, icurrent_file, mural_0_1_points, prev_image_width / 2)
 
     current_mural_warped = cv2.warpPerspective(icurrent, H_current_mosaic, (output_width, output_height))
-    cv2.imshow("ah3", first_mural_warped)
-    cv2.imshow("ah2", current_mural_warped)
-    cv2.waitKey(0)
+    #cv2.imshow("ah3", prev_mural_warped)
+    #cv2.imshow("ah2", current_mural_warped)
+
+    current_mural_warped = fuse_color_images(current_mural_warped, prev_mural_warped)
+
+    cv2.imshow("fused", current_mural_warped)
+
+    prev_mural_warped = current_mural_warped
+    iprev_file = icurrent_file
+    H_prev_mosaic = H_current_mosaic
+
+cv2.waitKey(0)
 
 
     

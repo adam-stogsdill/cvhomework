@@ -18,8 +18,8 @@ def perform(TRAINING_IMAGE_NAME, QUERY_IMAGE_NAME, points, offset):
     #assert (os.path.exists(file_path))
     bgr_train = cv2.imread(TRAINING_IMAGE_NAME)  # Get training image
     bgr_train_vis = bgr_train.copy()
-    for x in range(4):
-        cv2.circle(bgr_train_vis, (int(points[x,0]), int(points[x,1])), 3, (255,0,0), 5)
+    '''for x in range(4):
+        cv2.circle(bgr_train_vis, (int(points[x,0]), int(points[x,1])), 3, (255,0,0), 5)'''
     #file_path = os.path.join(IMAGE_DIRECTORY, QUERY_IMAGE_NAME)
     #assert (os.path.exists(file_path))
     bgr_query = cv2.imread(QUERY_IMAGE_NAME)  # Get query image
@@ -27,13 +27,13 @@ def perform(TRAINING_IMAGE_NAME, QUERY_IMAGE_NAME, points, offset):
     actual.append(1 if "negative" in QUERY_IMAGE_NAME else 0)
 
     # Show input images.
-    cv2.imshow("Training image", bgr_train_vis)
-    cv2.imwrite("TrainingImageWithAnnotatinons.png", bgr_train_vis)
+    #cv2.imshow("Training image", bgr_train_vis)
+   # cv2.imwrite("TrainingImageWithAnnotatinons.png", bgr_train_vis)
     #cv2.imshow("Query image", bgr_query)
 
     # Extract keypoints and descriptors.
 
-    orb = cv2.ORB_create()
+    orb = cv2.ORB_create(nfeatures=2000)
 
     kp_train, desc_train = detect_features(bgr_train)
     kp_query, desc_query = detect_features(bgr_query)
@@ -74,10 +74,11 @@ def perform(TRAINING_IMAGE_NAME, QUERY_IMAGE_NAME, points, offset):
     # Calculate an affine transformation from the training image to the query image.
     A_train_query, inliers, dst_points, src_points = calc_affine_transformation(matches, kp_train, kp_query)
 
+
     H, _ = cv2.findHomography(src_points, dst_points)
 
     first_mural_warped = cv2.warpPerspective(bgr_query, H, (1000, 500))
-    cv2.imshow("ah",first_mural_warped)
+    #cv2.imshow("ah",first_mural_warped)
 
     print(H)
 
@@ -107,16 +108,16 @@ def perform(TRAINING_IMAGE_NAME, QUERY_IMAGE_NAME, points, offset):
         blended_image = bgr_query / 2
         blended_image[:, :, 1] += warped_training[:, :, 1] / 2
         blended_image[:, :, 2] += warped_training[:, :, 2] / 2
-        cv2.imshow("Blended", bgr_query)
-        cv2.imshow("matches", bgr_matches)
-        cv2.imshow("warped training", warped_training)
+        #cv2.imshow("Blended", bgr_query)
+        #cv2.imshow("matches", bgr_matches)
+        #cv2.imshow("warped training", warped_training)
         predicted.append(0)
     else:
         print("Object not detected; can't fit an affine transform")
         predicted.append(1)
-
-    return H
     #cv2.waitKey(0)
+    return H
+    
 
 
 # Detect features in the image and return the keypoints and descriptors.
@@ -284,4 +285,4 @@ if __name__ == "__main__":
         QUERY_IMAGE_NAME = f
         main()
     print(confusion_matrix(actual, predicted))'''
-    perform("mural01.jpg", "mural02.jpg", np.asarray([[521, 182, 1], [716, 184, 1], [705, 400, 1], [477, 375, 1]]))
+    perform("mural02.jpg", "mural03.jpg", np.asarray([[521, 182, 1], [716, 184, 1], [705, 400, 1], [477, 375, 1]]), None)
